@@ -3,5 +3,13 @@
     <TargetFramework>net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>SurvivorsStarterKit</RootNamespace>
+    <!-- Автоглоб **/*.cs выключен: иначе в сборку игры попадают чужие
+         исходники (Tests/, служебный кэш .godot/mono/temp) и дублируются
+         атрибуты сборки (CS0579). Компилируем только Scripts/. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefaultItemExcludes>$(DefaultItemExcludes);.godot/**/*</DefaultItemExcludes>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Scripts/**/*.cs" />
+  </ItemGroup>
 </Project>
