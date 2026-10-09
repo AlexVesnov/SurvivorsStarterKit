@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_biw6f")
 Type = 4
-Name = "Sphère - Dégâts+"
-Description = "Les sphères flottantes font plus de dégâts."
+Name = "Сферы — урон+"
+Description = "Летающие сферы наносят больше урона."
 IsCumulable = true
 MaxCumul = 6

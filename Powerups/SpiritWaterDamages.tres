@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_mfl2n")
 Type = 7
-Name = "Poison - Dégâts+"
-Description = "Augmente les dégâts du poison: +5% (+{0}%)"
+Name = "Яд — урон+"
+Description = "Увеличивает урон яда: +5% (+{0}%)"
 IsCumulable = true
 MaxCumul = 6

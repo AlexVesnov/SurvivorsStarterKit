@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_ivrxu")
 Type = 9
-Name = "Poison - Délai-"
-Description = "Réduit le délai entre deux poisons: -5%"
+Name = "Яд — перезарядка−"
+Description = "Сокращает интервал между отравлениями: −5%"
 IsCumulable = true
 MaxCumul = 6

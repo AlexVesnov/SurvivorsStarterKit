@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_2lpyf")
 Type = 3
-Name = "Plus de sphères"
-Description = "Ajoute une sphère supplémentaire qui tournoie autour du joueur."
+Name = "Больше сфер"
+Description = "Добавляет ещё одну сферу, вращающуюся вокруг героя."
 IsCumulable = true
 MaxCumul = 6

@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_5y3e5")
 Type = 2
-Name = "Tir - Vitesse+"
-Description = "Augmente la vitesse des balles: +5% (+{0}%)"
+Name = "Выстрел — скорость+"
+Description = "Увеличивает скорость пуль: +5% (+{0}%)"
 IsCumulable = true
 MaxCumul = 6

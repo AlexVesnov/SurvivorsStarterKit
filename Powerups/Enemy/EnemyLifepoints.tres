@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_id5uf")
 Value = 5.0
-Name = "Monstres PV+"
-Description = "Les monstres ont 5 points de vie supplémentaire (total: +{0} PV)"
+Name = "Монстры: здоровье+"
+Description = "Монстры получают 5 дополнительных очков здоровья (всего: +{0} HP)"
 MaxStack = 100
 Type = 100

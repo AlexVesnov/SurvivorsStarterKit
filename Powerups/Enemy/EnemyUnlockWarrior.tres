@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_da31g")
-Name = "Monstre: Guerrier"
-Description = "Débloque la classe d'ennemi \"Guerrier\""
+Name = "Монстр: воин"
+Description = "Открывает класс врага «Воин»"
 MaxStack = 1
 Type = 3

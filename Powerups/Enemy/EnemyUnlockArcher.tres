@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_mmswy")
-Name = "Monstre: Archer"
-Description = "Débloque la classe d'ennemi \"Archer\""
+Name = "Монстр: лучник"
+Description = "Открывает класс врага «Лучник»"
 MaxStack = 1
 Type = 2
