@@ -19,3 +19,7 @@ mono_crash.*.json
 
 .vs/
 .idea
+
+# .NET build artifacts
+[Bb]in/
+[Oo]bj/

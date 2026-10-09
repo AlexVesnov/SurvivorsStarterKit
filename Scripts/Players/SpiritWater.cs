@@ -1,96 +1,93 @@
 using Godot;
 using System.Collections.Generic;
+using SuperheroSurvivors.Core;
 
-public partial class SpiritWater : Node3D, IUpgradable
+/// Авто-оружие: ядовитая зона, появляющаяся в случайной точке вокруг героя.
+/// Наносит урон всем врагам внутри раз в тик, исчезает через Duration.
+public partial class SpiritWater : AutoWeapon
 {
     [Export]
-    public uint Damages = 1;
-
-    private uint _damagesBonus = 0;
-
-    public uint TotalDamages => Damages + _damagesBonus;
+    public float Damages = 1f;
 
     [Export]
     public float Duration = 4f;
 
-    private float _durationBonus = 0;
-
-    public float TotalDuration => Duration + _durationBonus;
-
+    /// Интервал между появлениями зон, в секундах.
     [Export]
     public float Cooldown = 5f;
 
-    private float _cooldownBonus = 0;
-
-    public float TotalCooldown => Cooldown - _cooldownBonus;
-
     [Export]
-    public float ProjectileRange = 2;
+    public float ProjectileRange = 2f;
 
     [Export]
     public PackedScene ProjectilePrefab;
+
+    public override string WeaponId => "spirit_water";
+
+    private readonly List<Enemy> _enemiesInZone = new();
     private Timer _projectileCooldown;
     private Timer _damageCooldown;
 
-    private List<Enemy> _enemies = new();
-    private GameManager _gameManager;
-
-    // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        _gameManager = GetNode<GameManager>("/root/GameManager");
         _projectileCooldown = GetNode<Timer>("ProjectileCooldown");
-        _projectileCooldown.WaitTime = TotalCooldown;
-        _projectileCooldown.Start();
+        _projectileCooldown.WaitTime = Cooldown;
         _projectileCooldown.Timeout += OnAttackReady;
+        _projectileCooldown.Start();
 
         _damageCooldown = GetNode<Timer>("DamageCooldown");
+        _damageCooldown.Timeout += OnDamageTick;
         _damageCooldown.Start();
-        _damageCooldown.Timeout += OnDamageReady;
+    }
+
+    public void AddDamageBonus(int bonus) => Damages += bonus;
+
+    public void AddCooldownBonus(float bonus)
+    {
+        Cooldown = Mathf.Max(1f, Cooldown - bonus);
+        _projectileCooldown.WaitTime = Cooldown;
     }
 
     private void OnAttackReady()
     {
-        _projectileCooldown.Start();
-        var projectile = ProjectilePrefab.Instantiate<Area3D>();
-        projectile.BodyEntered += OnBodyEntered;
-        projectile.BodyExited += OnBodyExited;
-        GetTree().CurrentScene.AddChild(projectile);
-        projectile.GlobalPosition = _gameManager.GetRandomPosAroundPlayer(ProjectileRange) + new Vector3(0, 0.1f, 0);
-
-        var tweener = GetTree().CreateTween();
-        tweener.TweenProperty(projectile.GetNode("Visual"), "scale", new Vector3(0.01f, 0.01f, 0.01f), 1).SetDelay(TotalDuration);
-        tweener.Parallel().TweenCallback(Callable.From(() => projectile.SetPhysicsProcess(false))).SetDelay(TotalDuration);
-        tweener.TweenCallback(Callable.From(projectile.QueueFree));
+        _enemiesInZone.Clear();
+        var zone = ProjectilePrefab.Instantiate<Area3D>();
+        zone.BodyEntered += OnBodyEntered;
+        zone.BodyExited += OnBodyExited;
+        GetTree().CurrentScene.AddChild(zone);
+        zone.GlobalPosition = GameManager.Instance.GetRandomPosAroundPlayer(ProjectileRange)
+                              + new Vector3(0, 0.1f, 0);
+        DespawnAfter(zone, Duration);
     }
 
-    private void OnBodyExited(Node3D body)
+    private void OnDamageTick()
     {
-        if (body is not Enemy enemy) return;
-        _enemies.Remove(enemy);
+        for (int i = _enemiesInZone.Count - 1; i >= 0; i--)
+        {
+            if (!GodotObject.IsInstanceValid(_enemiesInZone[i]))
+            {
+                _enemiesInZone.RemoveAt(i);
+                continue;
+            }
+            DealDamage(_enemiesInZone[i], Damages, DamageType.Fire);
+        }
     }
 
     private void OnBodyEntered(Node3D body)
     {
-        if (body is not Enemy enemy) return;
-        _enemies.Add(enemy);
+        if (body is Enemy enemy && !_enemiesInZone.Contains(enemy))
+            _enemiesInZone.Add(enemy);
     }
 
-    private void OnDamageReady()
+    private void OnBodyExited(Node3D body)
     {
-        _damageCooldown.Start();
-        foreach (var enemy in _enemies)
-            enemy.TakeDamages(TotalDamages);
+        if (body is Enemy enemy)
+            _enemiesInZone.Remove(enemy);
     }
 
-    public void Upgrade(PowerupType powerupType)
+    private async void DespawnAfter(Area3D zone, float seconds)
     {
-        switch (powerupType)
-        {
-            case PowerupType.SpiritWaterDamages: _damagesBonus += 1; break;
-            case PowerupType.SpiritWaterDuration: _durationBonus += 0.2f; break;
-            case PowerupType.SpiritWaterCooldown: _cooldownBonus += 0.25f; break;
-            default: break;
-        }
+        await ToSignal(GetTree().CreateTimer(seconds), SceneTreeTimer.SignalName.Timeout);
+        if (GodotObject.IsInstanceValid(zone)) zone.QueueFree();
     }
 }

@@ -1,68 +1,54 @@
 using Godot;
-using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using SuperheroSurvivors.Core;
 
+/// Экран выбора при левел-апе: 4 карточки, модель Brotato.
+/// Класс и путь сохранены для совместимости с HUD.tscn (UpgradeContainer).
 public partial class UpgradeView : Control
 {
     private PackedScene _choicePanel;
 
-    private List<Choice> _choices;
-
-    public event Action<Choice> OnChoose;
-
-    // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        _choicePanel = (PackedScene)GD.Load("res://Prefabs/UI/powerup_block.tscn");
+        _choicePanel = GD.Load<PackedScene>("res://Prefabs/UI/powerup_block.tscn");
         ProcessMode = ProcessModeEnum.Always;
-        Clear();
+        ClearChoices();
     }
 
-    internal void Clear()
+    public Task<LevelUpOption> WaitChoiceAsync(List<LevelUpOption> options)
+    {
+        var tcs = new TaskCompletionSource<LevelUpOption>();
+        ClearChoices();
+
+        foreach (var option in options)
+        {
+            var panel = _choicePanel.Instantiate<Button>();
+            panel.ProcessMode = ProcessModeEnum.Always;
+
+            panel.GetNode<Label>("MarginContainer/VBoxContainer/VBoxPlayer/Name").Text = option.Title;
+            panel.GetNode<Label>("MarginContainer/VBoxContainer/VBoxPlayer/Description").Text = option.Description;
+            panel.GetNode<Control>("MarginContainer/VBoxContainer/VBoxEnemy").Visible = false;
+
+            var captured = option;
+            panel.Pressed += () =>
+            {
+                foreach (var child in GetChildren())
+                    if (child is Button button) button.Disabled = true;
+                tcs.TrySetResult(captured);
+            };
+            AddChild(panel);
+        }
+
+        return tcs.Task;
+    }
+
+    public void ClearChoices()
     {
         foreach (var child in GetChildren())
         {
             RemoveChild(child);
             child.QueueFree();
-        }
-    }
-
-    internal void SetChoices(List<Choice> choices)
-    {
-        Clear();
-
-        _choices = choices;
-        int choiceIndex = 1;
-        foreach (var choice in choices)
-        {
-            var panel = _choicePanel.Instantiate<Button>();
-            panel.ProcessMode = ProcessModeEnum.Always;
-            panel.Pressed += () =>
-            {
-                panel.Disabled = true;
-                OnChoose?.Invoke(choice);
-            };
-            AddChild(panel);
-
-            var name = panel.GetNode<Label>("MarginContainer/VBoxContainer/VBoxPlayer/Name");
-            name.Text = choice.Powerup.Name;
-            var description = panel.GetNode<Label>("MarginContainer/VBoxContainer/VBoxPlayer/Description");
-            description.Text = choice.Powerup.Description;
-
-            name = panel.GetNode<Label>("MarginContainer/VBoxContainer/VBoxEnemy/Name");
-            name.Text = choice.EnemyPowerup.Name;
-            description = panel.GetNode<Label>("MarginContainer/VBoxContainer/VBoxEnemy/Description");
-            description.Text = string.Format(choice.EnemyPowerup.Description, Math.Round(choice.EnemyValue, 1));
-        }
-    }
-
-    internal void DisplayChoicePicked(int choice)
-    {
-        var children = GetChildren();
-        for (int i = children.Count - 1; i >= 0; --i)
-        {
-            if (choice - 1 == i) continue;
-            RemoveChild(children[i]);
         }
     }
 }

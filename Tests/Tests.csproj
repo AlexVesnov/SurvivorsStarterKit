@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Консольный раннер тестов без внешних пакетов: не требует NuGet,
+       работает офлайн. Запуск: dotnet run, проект Tests. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>SuperheroSurvivors.Tests</RootNamespace>
+    <AssemblyName>SuperheroSurvivors.Tests</AssemblyName>
+  </PropertyGroup>
+
+  <!-- Линкуем чистые Core-файлы продакшн-кода напрямую:
+       тесты всегда проверяют актуальные исходники, без дублирования. -->
+  <ItemGroup>
+    <Compile Include="..\Scripts\Core\DamageType.cs" Link="Core\DamageType.cs" />
+    <Compile Include="..\Scripts\Core\DamageInfo.cs" Link="Core\DamageInfo.cs" />
+    <Compile Include="..\Scripts\Core\StatType.cs" Link="Core\StatType.cs" />
+    <Compile Include="..\Scripts\Core\StatModifier.cs" Link="Core\StatModifier.cs" />
+    <Compile Include="..\Scripts\Core\StatBlock.cs" Link="Core\StatBlock.cs" />
+  </ItemGroup>
+
+</Project>

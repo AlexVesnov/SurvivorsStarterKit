@@ -1,83 +1,56 @@
-
-
 using Godot;
+using SuperheroSurvivors.Core;
 
-public partial class Shooting : Node3D, IUpgradable
+/// Авто-оружие: пуля в ближайшего врага. Пули существуют максимум 3 секунды
+/// (в ките жили вечно при промахе — исправлено).
+public partial class Shooting : AutoWeapon
 {
     [Export]
-    public uint Damages = 5;
-
-    private uint _damagesBonus = 0;
+    public float Damages = 5f;
 
     [Export]
-    public float AttackSpeed = 1;
-
-    private float _attackSpeedBonus = 0;
-
-    public float TotalAttackSpeed => AttackSpeed + _attackSpeedBonus;
+    public float AttackSpeed = 1f;
 
     [Export]
-    public float BulletSpeed = 2;
+    public float BulletSpeed = 8f;
 
-    private float _bulletSpeedBonus = 0;
-
-    public float TotalBulletSpeed => BulletSpeed + _bulletSpeedBonus;
+    public override string WeaponId => "shooting";
 
     private PackedScene _bulletPrefab;
-
-    private GameManager _gameManager;
-
     private Timer _timer;
 
-    // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        _gameManager = GetNode<GameManager>("/root/GameManager");
-        _bulletPrefab = (PackedScene)GD.Load("res://Prefabs/Powerups/bullet.tscn");
-
+        _bulletPrefab = GD.Load<PackedScene>("res://Prefabs/Powerups/bullet.tscn");
         _timer = GetNode<Timer>("Timer");
-        _timer.WaitTime = 1f / TotalAttackSpeed;
+        _timer.WaitTime = 1f / AttackSpeed;
         _timer.Timeout += Shoot;
         _timer.Start();
     }
 
+    public void AddDamageBonus(int bonus) => Damages += bonus;
+
     private void Shoot()
     {
-        _timer.Start();
-
-        var nearestEnemy = _gameManager.GetNearestEnemy();
-        if (nearestEnemy == null) return;
+        var target = FindTarget();
+        if (target == null) return;
 
         var bullet = _bulletPrefab.Instantiate<RigidBody3D>();
-        //bullet.ConstantForce = TotalBulletSpeed * (nearestEnemy.GlobalPosition - GlobalPosition).Normalized();
-        bullet.LinearVelocity = TotalBulletSpeed * (nearestEnemy.GlobalPosition - GlobalPosition).Normalized();
-        bullet.BodyEntered += (body) => OnBodyEntered(bullet, body);
+        bullet.LinearVelocity = BulletSpeed * (target.GlobalPosition - GlobalPosition).Normalized();
+        bullet.BodyEntered += body =>
+        {
+            if (body is Enemy enemy) DealDamage(enemy, Damages, DamageType.Kinetic);
+            bullet.QueueFree();
+        };
         GetTree().CurrentScene.AddChild(bullet);
         bullet.GlobalPosition = GlobalPosition + new Vector3(0, 0.5f, 0);
+
+        DespawnAfter(bullet, 3f);
     }
 
-    private void OnBodyEntered(RigidBody3D bullet, Node body)
+    private async void DespawnAfter(RigidBody3D bullet, float seconds)
     {
-        bullet.QueueFree();
-        if (body is not Enemy enemy) return;
-        enemy.TakeDamages(Damages + _damagesBonus);
-    }
-
-    public void Upgrade(PowerupType powerupType)
-    {
-        switch (powerupType)
-        {
-            case PowerupType.ShootingDamages:
-                _damagesBonus += 1;
-                break;
-            case PowerupType.ShootingAttackSpeed:
-                _attackSpeedBonus += 0.1f;
-                _timer.WaitTime = 1f / TotalAttackSpeed;
-                break;
-            case PowerupType.ShootingBulletSpeed:
-                _bulletSpeedBonus += 0.1f;
-                break;
-            default: break;
-        }
+        await ToSignal(GetTree().CreateTimer(seconds), SceneTreeTimer.SignalName.Timeout);
+        if (GodotObject.IsInstanceValid(bullet)) bullet.QueueFree();
     }
 }
